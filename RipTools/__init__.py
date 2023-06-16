@@ -26,10 +26,24 @@ bl_info = {
 from bpy.types import (Panel, Operator)
 from bpy.props import PointerProperty
 
+
+
+
+class AddIntInputOperator(bpy.types.Operator):
+    bl_idname = "object.addintinput"
+    bl_label = "Create Int Input"
+    bl_description = "Adds an integer input to a node group, provided you have one selected."
+
+    def execute(self, context):
+        target_group = bpy.context.active_node.label
+        inputName = bpy.data.scenes["Scene"].InputName
+        bpy.data.node_groups[target_group].inputs.new('NodeSocketInt', inputName)
+        return {'FINISHED'}
+
+
 class MergeBonesOperator(bpy.types.Operator):
     bl_idname = "object.merge_bones"
     bl_label = "Merge Bones"
-
 
 
     def execute(self, context):
@@ -95,11 +109,31 @@ class RigToolsPanel(bpy.types.Panel):
         row = layout.row()
         row.operator(MergeBonesOperator.bl_idname, text = "Merge Bones", icon = "CONSTRAINT_BONE")
 
+class RigToolsShaderPanel(bpy.types.Panel):
+    bl_label =  "RipTools"
+    bl_idname = "OBJECT_PT_RigToolsShader"
+    bl_space_type = "NODE_EDITOR"
+    bl_region_type = "UI"
+    bl_category = "RipTools"
+    
+    def draw(self, context):
+        scene = context.scene
+        layout = self.layout
+        obj = context.object
+        row = layout.row()
+        row.label(text="----ADD UNUSED INPUTS----")
+        row = layout.row()
+        row.prop(context.scene, "InputName")
+        row = layout.row()
+        row.operator(AddIntInputOperator.bl_idname, text = "Add Integer Input")
+
 from bpy.utils import register_class, unregister_class
 
 _classes = [
     MergeBonesOperator,
-    RigToolsPanel
+    RigToolsPanel,
+    AddIntInputOperator,
+    RigToolsShaderPanel
 ]
 
 def register():
@@ -108,6 +142,8 @@ def register():
         register_class(cls)
     bpy.types.Scene.source_armature_target = bpy.props.PointerProperty(type = bpy.types.Object)
     bpy.types.Scene.dest_armature_target = bpy.props.PointerProperty(type = bpy.types.Object)
+    bpy.types.Scene.InputName = bpy.props.StringProperty(name = "Input Name", description = "Name of the new input", default = "")
+
 
 
 def unregister():
